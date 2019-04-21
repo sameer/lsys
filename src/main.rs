@@ -45,7 +45,7 @@ fn sierpinski() {
             other => vec![other],
         },
         std::f64::consts::PI * 2. / 3.,
-        4,
+        6,
         &mut out,
     );
 }
