@@ -1,8 +1,5 @@
-extern crate cairo;
-
-use cairo::{svg, Context};
-use std::fs::File;
-use std::io::Write;
+use cairo::Context;
+use std::path::Path;
 
 fn main() {
     koch();
@@ -20,7 +17,6 @@ fn main() {
 }
 
 fn koch() {
-    let mut out = File::create("out/koch.svg").unwrap();
     run(
         "F",
         &['F'],
@@ -30,12 +26,11 @@ fn koch() {
         },
         std::f64::consts::PI / 2.,
         4,
-        &mut out,
+        Path::new("out/koch.svg"),
     );
 }
 
 fn sierpinski() {
-    let mut out = File::create("out/sierpinski.svg").unwrap();
     run(
         "F-G-G",
         &['F', 'G'],
@@ -46,12 +41,11 @@ fn sierpinski() {
         },
         std::f64::consts::PI * 2. / 3.,
         6,
-        &mut out,
+        Path::new("out/sierpinski.svg"),
     );
 }
 
 fn arrowhead() {
-    let mut out = File::create("out/arrowhead.svg").unwrap();
     run(
         "A",
         &['A', 'B'],
@@ -62,12 +56,11 @@ fn arrowhead() {
         },
         std::f64::consts::PI * 1. / 3.,
         6,
-        &mut out,
+        Path::new("out/arrowhead.svg"),
     );
 }
 
 fn dragon() {
-    let mut out = File::create("out/dragon.svg").unwrap();
     run(
         "FX",
         &['F'],
@@ -78,12 +71,11 @@ fn dragon() {
         },
         std::f64::consts::PI / 2.,
         12,
-        &mut out,
+        Path::new("out/dragon.svg"),
     );
 }
 
 fn plant() {
-    let mut out = File::create("out/plant.svg").unwrap();
     run(
         "X",
         &['F'],
@@ -94,12 +86,11 @@ fn plant() {
         },
         std::f64::consts::PI * 25.0 / 180.0,
         5,
-        &mut out,
+        Path::new("out/plant.svg"),
     );
 }
 
 fn moore() {
-    let mut out = File::create("out/moore.svg").unwrap();
     run(
         "LFL+F+LFL",
         &['F'],
@@ -110,12 +101,11 @@ fn moore() {
         },
         std::f64::consts::PI * 90.0 / 180.0,
         5,
-        &mut out,
+        Path::new("out/moore.svg"),
     );
 }
 
 fn hilbert() {
-    let mut out = File::create("out/hilbert.svg").unwrap();
     run(
         "A",
         &['F'],
@@ -126,12 +116,11 @@ fn hilbert() {
         },
         std::f64::consts::PI / 2.0,
         6,
-        &mut out,
+        Path::new("out/hilbert.svg"),
     );
 }
 
 fn sierpinski_carpet() {
-    let mut out = File::create("out/sierpinski_carpet.svg").unwrap();
     run(
         "F+F+F+F",
         &['F'],
@@ -141,12 +130,11 @@ fn sierpinski_carpet() {
         },
         std::f64::consts::PI / 2.,
         4,
-        &mut out,
+        Path::new("out/sierpinski_carpet.svg"),
     );
 }
 
 fn snowflake() {
-    let mut out = File::create("out/snowflake.svg").unwrap();
     run(
         "F++F++F",
         &['F'],
@@ -156,12 +144,11 @@ fn snowflake() {
         },
         std::f64::consts::PI / 3.,
         4,
-        &mut out,
+        Path::new("out/snowflake.svg"),
     );
 }
 
 fn gosper() {
-    let mut out = File::create("out/gosper.svg").unwrap();
     run(
         "XF",
         &['F'],
@@ -172,12 +159,11 @@ fn gosper() {
         },
         std::f64::consts::PI / 3.,
         4,
-        &mut out,
+        Path::new("out/gosper.svg"),
     );
 }
 
 fn kolam() {
-    let mut out = File::create("out/kolam.svg").unwrap();
     run(
         "-D--D",
         &['F'],
@@ -190,12 +176,11 @@ fn kolam() {
         },
         std::f64::consts::PI / 4.0,
         6,
-        &mut out,
+        Path::new("out/kolam.svg"),
     );
 }
 
 fn crystal() {
-    let mut out = File::create("out/crystal.svg").unwrap();
     run(
         "F+F+F+F",
         &['F'],
@@ -205,22 +190,22 @@ fn crystal() {
         },
         std::f64::consts::PI / 2.,
         4,
-        &mut out,
+        Path::new("out/crystal.svg"),
     );
 }
 
-fn run<F, W>(
+fn run<'a, F, P>(
     axiom: &str,
     variables_to_draw: &[char],
     rules: F,
     angle: f64,
     iterations: usize,
-    writer: W,
+    path: P,
 ) where
     F: Fn(char) -> Vec<char> + Copy,
-    W: Write,
+    P: Into<&'a Path>
 {
-    let surf = svg::Writer::new(1024.0, 1024.0, writer);
+    let surf = cairo::SvgSurface::new(1024.0, 1024.0, Some(path.into())).unwrap();
     let ctx = Context::new(&surf);
     ctx.scale(1024., 1024.);
 
