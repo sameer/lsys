@@ -235,7 +235,7 @@ fn run<'a, F, P>(
 
     let mut current_position = (Ratio::from(BigInt::from(0)), Ratio::from(BigInt::from(0)));
     let mut current_angle = -std::f64::consts::PI / 2.0;
-    let mut stroke: Vec<(Ratio<BigInt>, Ratio<BigInt>)> = vec![];
+    let mut strokes: Vec<((Ratio<BigInt>, Ratio<BigInt>), bool)> = vec![];
     let mut stack: Vec<((Ratio<BigInt>, Ratio<BigInt>), f64)> = vec![];
     for c in state.iter() {
         match c {
@@ -255,13 +255,14 @@ fn run<'a, F, P>(
                 let state = stack.pop().unwrap();
                 current_position = state.0;
                 current_angle = state.1;
+                strokes.push((current_position.clone(), true));
             }
             other if variables_to_draw.contains(&other) => {
                 current_position = (
                     current_position.0 + Ratio::from_float(f64::cos(current_angle)).unwrap(),
                     current_position.1 + Ratio::from_float(f64::sin(current_angle)).unwrap(),
                 );
-                stroke.push(current_position.clone());
+                strokes.push((current_position.clone(), false));
             }
             _ => {}
         }
@@ -272,12 +273,36 @@ fn run<'a, F, P>(
     let min_width_height: f64 = WIDTH.min(HEIGHT);
 
     let max = (
-        stroke.iter().max_by_key(|(x, _y)| x).cloned().unwrap().0,
-        stroke.iter().max_by_key(|(_x, y)| y).cloned().unwrap().1,
+        strokes
+            .iter()
+            .max_by_key(|((x, _y), _move)| x)
+            .cloned()
+            .unwrap()
+            .0
+             .0,
+        strokes
+            .iter()
+            .max_by_key(|((_x, y), _move)| y)
+            .cloned()
+            .unwrap()
+            .0
+             .1,
     );
     let min = (
-        stroke.iter().min_by_key(|(x, _y)| x).cloned().unwrap().0,
-        stroke.iter().min_by_key(|(_x, y)| y).cloned().unwrap().1,
+        strokes
+            .iter()
+            .min_by_key(|((x, _y), _move)| x)
+            .cloned()
+            .unwrap()
+            .0
+             .0,
+        strokes
+            .iter()
+            .min_by_key(|((_x, y), _move)| y)
+            .cloned()
+            .unwrap()
+            .0
+             .1,
     );
     let range = ((max.0 - &min.0), (max.1 - &min.1));
     let min_to_zero_adjustment = (-min.0.clone(), -min.1.clone());
@@ -300,20 +325,34 @@ fn run<'a, F, P>(
         Ratio::from_float((WIDTH - min_width_height) / min_width_height / 2.).unwrap(),
         Ratio::from_float((HEIGHT - min_width_height) / min_width_height / 2.).unwrap(),
     );
-    stroke.iter_mut().for_each(|segment| {
+    strokes.iter_mut().for_each(|segment| {
         *segment = (
-            (segment.0.clone() + &min_to_zero_adjustment.0) / &range.0 + &cairo_offset.0,
-            (segment.1.clone() + &min_to_zero_adjustment.1) / &range.1 + &cairo_offset.1,
+            (
+                (segment.0 .0.clone() + &min_to_zero_adjustment.0) / &range.0 + &cairo_offset.0,
+                (segment.0 .1.clone() + &min_to_zero_adjustment.1) / &range.1 + &cairo_offset.1,
+            ),
+            segment.1,
         );
     });
-    if let Some(first_segment) = stroke.first() {
+    if let Some(first_segment) = strokes.first() {
         ctx.move_to(
-            first_segment.0.to_f64().unwrap(),
-            first_segment.1.to_f64().unwrap(),
+            first_segment.0 .0.to_f64().unwrap(),
+            first_segment.0 .1.to_f64().unwrap(),
         );
     }
-    for segment in stroke.drain(1..) {
-        ctx.line_to(segment.0.to_f64().unwrap(), segment.1.to_f64().unwrap());
+    for segment in strokes.drain(1..) {
+        if segment.1 {
+            ctx.stroke();
+            ctx.move_to(
+                segment.0 .0.to_f64().unwrap(),
+                segment.0 .1.to_f64().unwrap(),
+            );
+        } else {
+            ctx.line_to(
+                segment.0 .0.to_f64().unwrap(),
+                segment.0 .1.to_f64().unwrap(),
+            );
+        }
     }
     ctx.stroke();
 }

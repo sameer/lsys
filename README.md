@@ -14,7 +14,7 @@ Renderings of various L-systems using Rust and Cairo. Special thanks goes to [Pa
 ## Dragon Curve
 ![dragon](out/dragon.svg)
 
-## Fractal Plant (Wikipedia)
+## Fractal Plant
 ![plant](out/plant.svg)
 
 ## Moore Curve
