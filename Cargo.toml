@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 cairo-rs = { version = "^0", features = ["svg"] }
+num-rational = "0.4"
+num = "0.4"
+num-bigint = "0.4"

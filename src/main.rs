@@ -1,4 +1,9 @@
 use cairo::Context;
+use num::rational::Ratio;
+use num::BigInt;
+use num::ToPrimitive;
+use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::path::Path;
 
 fn main() {
@@ -21,8 +26,8 @@ fn koch() {
         "F",
         &['F'],
         |c: char| match c {
-            'F' => "F+F-F-F+F".chars().collect(),
-            other => vec![other],
+            'F' => "F+F-F-F+F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 2.,
         4,
@@ -35,9 +40,9 @@ fn sierpinski() {
         "F-G-G",
         &['F', 'G'],
         |c: char| match c {
-            'F' => "F-G+F+G-F".chars().collect(),
-            'G' => "GG".chars().collect(),
-            other => vec![other],
+            'F' => "F-G+F+G-F",
+            'G' => "GG",
+            _ => unreachable!(),
         },
         std::f64::consts::PI * 2. / 3.,
         6,
@@ -50,9 +55,9 @@ fn arrowhead() {
         "A",
         &['A', 'B'],
         |c: char| match c {
-            'A' => "B-A-B".chars().collect(),
-            'B' => "A+B+A".chars().collect(),
-            other => vec![other],
+            'A' => "B-A-B",
+            'B' => "A+B+A",
+            _ => unreachable!(),
         },
         std::f64::consts::PI * 1. / 3.,
         6,
@@ -65,9 +70,10 @@ fn dragon() {
         "FX",
         &['F'],
         |c: char| match c {
-            'X' => "X+YF+".chars().collect(),
-            'Y' => "-FX-Y".chars().collect(),
-            other => vec![other],
+            'X' => "X+YF+",
+            'Y' => "-FX-Y",
+            'F' => "F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 2.,
         12,
@@ -80,9 +86,9 @@ fn plant() {
         "X",
         &['F'],
         |c: char| match c {
-            'X' => "F-[[X]+X]+F[+FX]-X".chars().collect(),
-            'F' => "FF".chars().collect(),
-            other => vec![other],
+            'X' => "F-[[X]+X]+F[+FX]-X",
+            'F' => "FF",
+            _ => unreachable!(),
         },
         std::f64::consts::PI * 25.0 / 180.0,
         5,
@@ -95,9 +101,10 @@ fn moore() {
         "LFL+F+LFL",
         &['F'],
         |c: char| match c {
-            'L' => "-RF+LFL+FR-".chars().collect(),
-            'R' => "+LF-RFR-FL+".chars().collect(),
-            other => vec![other],
+            'L' => "-RF+LFL+FR-",
+            'R' => "+LF-RFR-FL+",
+            'F' => "F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI * 90.0 / 180.0,
         5,
@@ -110,9 +117,10 @@ fn hilbert() {
         "A",
         &['F'],
         |c: char| match c {
-            'A' => "-BF+AFA+FB-".chars().collect(),
-            'B' => "+AF-BFB-FA+".chars().collect(),
-            other => vec![other],
+            'A' => "-BF+AFA+FB-",
+            'B' => "+AF-BFB-FA+",
+            'F' => "F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 2.0,
         6,
@@ -125,8 +133,8 @@ fn sierpinski_carpet() {
         "F+F+F+F",
         &['F'],
         |c: char| match c {
-            'F' => "FF+F+F+F+FF".chars().collect(),
-            other => vec![other],
+            'F' => "FF+F+F+F+FF",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 2.,
         4,
@@ -139,8 +147,8 @@ fn snowflake() {
         "F++F++F",
         &['F'],
         |c: char| match c {
-            'F' => "F-F++F-F".chars().collect(),
-            other => vec![other],
+            'F' => "F-F++F-F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 3.,
         4,
@@ -153,12 +161,13 @@ fn gosper() {
         "XF",
         &['F'],
         |c: char| match c {
-            'X' => "X+YF++YF-FX--FXFX-YF+".chars().collect(),
-            'Y' => "-FX+YFYF++YF+FX--FX-Y".chars().collect(),
-            other => vec![other],
+            'X' => "X+YF++YF-FX--FXFX-YF+",
+            'Y' => "-FX+YFYF++YF+FX--FX-Y",
+            'F' => "F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 3.,
-        4,
+        5,
         Path::new("out/gosper.svg"),
     );
 }
@@ -168,11 +177,12 @@ fn kolam() {
         "-D--D",
         &['F'],
         |c: char| match c {
-            'A' => "F++FFFF--F--FFFF++F++FFFF--F".chars().collect(),
-            'B' => "F--FFFF++F++FFFF--F--FFFF++F".chars().collect(),
-            'C' => "BFA--BFA".chars().collect(),
-            'D' => "CFC--CFC".chars().collect(),
-            other => vec![other],
+            'A' => "F++FFFF--F--FFFF++F++FFFF--F",
+            'B' => "F--FFFF++F++FFFF--F--FFFF++F",
+            'C' => "BFA--BFA",
+            'D' => "CFC--CFC",
+            'F' => "F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 4.0,
         6,
@@ -185,8 +195,8 @@ fn crystal() {
         "F+F+F+F",
         &['F'],
         |c: char| match c {
-            'F' => "FF+F++F+F".chars().collect(),
-            other => vec![other],
+            'F' => "FF+F++F+F",
+            _ => unreachable!(),
         },
         std::f64::consts::PI / 2.,
         4,
@@ -202,54 +212,108 @@ fn run<'a, F, P>(
     iterations: usize,
     path: P,
 ) where
-    F: Fn(char) -> Vec<char> + Copy,
-    P: Into<&'a Path>
+    F: Fn(char) -> &'static str + Copy,
+    P: Into<&'a Path>,
 {
-    let surf = cairo::SvgSurface::new(1024.0, 1024.0, Some(path.into())).unwrap();
-    let ctx = Context::new(&surf);
-    ctx.scale(1024., 1024.);
-
-    ctx.set_line_width(0.001);
-    ctx.set_source_rgb(0., 0., 0.);
-
-    let mut state = axiom.to_string();
-
+    let variables_to_draw: HashSet<char> = HashSet::from_iter(variables_to_draw.iter().copied());
+    let mut state = axiom.chars().collect::<Vec<_>>();
     for _ in 0..iterations {
-        state = state.chars().map(rules).flatten().collect();
+        state = state
+            .iter()
+            .map(|c| match c {
+                '+' => "+",
+                '-' => "-",
+                '|' => "|",
+                '[' => "[",
+                ']' => "]",
+                letter => rules(*letter),
+            })
+            .map(|res| res.chars())
+            .flatten()
+            .collect();
     }
 
-    // let segment_count = state.chars().filter(|c| variables.contains(&c)).count();
-
-    ctx.move_to(0.5, 0.5);
-    let mut stack: Vec<((f64, f64), f64)> = vec![];
-    let mut curangle = -std::f64::consts::PI / 2.0;
-    for c in state.chars() {
+    let mut current_position = (Ratio::from(BigInt::from(0)), Ratio::from(BigInt::from(0)));
+    let mut current_angle = -std::f64::consts::PI / 2.0;
+    let mut stroke: Vec<(Ratio<BigInt>, Ratio<BigInt>)> = vec![];
+    let mut stack: Vec<((Ratio<BigInt>, Ratio<BigInt>), f64)> = vec![];
+    for c in state.iter() {
         match c {
             '+' => {
-                // ctx.rotate(angle);
-                curangle += angle;
+                current_angle += angle;
             }
             '-' => {
-                // ctx.rotate(-angle);
-                curangle -= angle;
+                current_angle -= angle;
             }
             '|' => {
-                curangle = -curangle;
+                current_angle = -current_angle;
             }
             '[' => {
-                stack.push((ctx.get_current_point(), curangle));
+                stack.push((current_position.clone(), current_angle));
             }
             ']' => {
                 let state = stack.pop().unwrap();
-                ctx.move_to((state.0).0, (state.0).1);
-                curangle = state.1;
+                current_position = state.0;
+                current_angle = state.1;
             }
-            other => {
-                if variables_to_draw.contains(&other) {
-                    ctx.rel_line_to(0.005 * f64::cos(curangle), 0.005 * f64::sin(curangle));
-                }
+            other if variables_to_draw.contains(&other) => {
+                current_position = (
+                    current_position.0 + Ratio::from_float(f64::cos(current_angle)).unwrap(),
+                    current_position.1 + Ratio::from_float(f64::sin(current_angle)).unwrap(),
+                );
+                stroke.push(current_position.clone());
             }
+            _ => {}
         }
+    }
+
+    const WIDTH: f64 = 1920.;
+    const HEIGHT: f64 = 1080.;
+    let min_width_height: f64 = WIDTH.min(HEIGHT);
+
+    let max = (
+        stroke.iter().max_by_key(|(x, _y)| x).cloned().unwrap().0,
+        stroke.iter().max_by_key(|(_x, y)| y).cloned().unwrap().1,
+    );
+    let min = (
+        stroke.iter().min_by_key(|(x, _y)| x).cloned().unwrap().0,
+        stroke.iter().min_by_key(|(_x, y)| y).cloned().unwrap().1,
+    );
+    let range = ((max.0 - &min.0), (max.1 - &min.1));
+    let min_to_zero_adjustment = (-min.0.clone(), -min.1.clone());
+
+    let surf = cairo::SvgSurface::new(WIDTH, HEIGHT, Some(path.into())).unwrap();
+    let ctx = Context::new(&surf);
+    ctx.scale(min_width_height, min_width_height);
+
+    // black background
+    ctx.set_source_rgb(0., 0., 0.);
+    ctx.rectangle(0., 0., WIDTH / min_width_height, HEIGHT / min_width_height);
+    ctx.fill();
+    // 1 px
+    ctx.set_line_width(0.001); //1. / (min_width_height / 2.));
+                               // white line
+    ctx.set_source_rgb(1., 1., 1.);
+
+    // convert to Cairo coordinates
+    let cairo_offset = (
+        Ratio::from_float((WIDTH - min_width_height) / min_width_height / 2.).unwrap(),
+        Ratio::from_float((HEIGHT - min_width_height) / min_width_height / 2.).unwrap(),
+    );
+    stroke.iter_mut().for_each(|segment| {
+        *segment = (
+            (segment.0.clone() + &min_to_zero_adjustment.0) / &range.0 + &cairo_offset.0,
+            (segment.1.clone() + &min_to_zero_adjustment.1) / &range.1 + &cairo_offset.1,
+        );
+    });
+    if let Some(first_segment) = stroke.first() {
+        ctx.move_to(
+            first_segment.0.to_f64().unwrap(),
+            first_segment.1.to_f64().unwrap(),
+        );
+    }
+    for segment in stroke.drain(1..) {
+        ctx.line_to(segment.0.to_f64().unwrap(), segment.1.to_f64().unwrap());
     }
     ctx.stroke();
 }
