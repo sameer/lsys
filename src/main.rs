@@ -60,7 +60,7 @@ fn arrowhead() {
             _ => unreachable!(),
         },
         std::f64::consts::PI * 1. / 3.,
-        6,
+        7,
         Path::new("out/arrowhead.svg"),
     );
 }
@@ -185,7 +185,7 @@ fn kolam() {
             _ => unreachable!(),
         },
         std::f64::consts::PI / 4.0,
-        6,
+        7,
         Path::new("out/kolam.svg"),
     );
 }
@@ -290,9 +290,9 @@ fn run<'a, F, P>(
     ctx.set_source_rgb(0., 0., 0.);
     ctx.rectangle(0., 0., WIDTH / min_width_height, HEIGHT / min_width_height);
     ctx.fill();
-    // 1 px
-    ctx.set_line_width(0.001); //1. / (min_width_height / 2.));
-                               // white line
+    // 2 px
+    ctx.set_line_width(2. / min_width_height);
+    // white line
     ctx.set_source_rgb(1., 1., 1.);
 
     // convert to Cairo coordinates
