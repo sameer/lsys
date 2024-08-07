@@ -1,11 +1,18 @@
 [package]
 name = "lsys"
-version = "0.1.0"
-authors = ["purisame"]
-edition = "2018"
+version = "0.2.0"
+authors = ["Sameer Puri <crates@purisa.me>"]
+edition = "2021"
+description = "Visualize 2D L-Systems with SVGs."
+repository = "https://github.com/sameer/lsys"
+license = "MIT"
+categories = ["command-line-utilities", "rendering"]
+keywords = ["system", "svg", "render", "lsystem"]
 
 [dependencies]
-cairo-rs = { version = "^0", features = ["svg"] }
+cairo-rs = { version = "^0", features = ["svg", "v1_16"] }
 num-rational = "0.4"
 num = "0.4"
 num-bigint = "0.4"
+clap = { version = "4.5", features = ["derive"] }
+thiserror = "1.0.63"

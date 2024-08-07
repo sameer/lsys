@@ -1,358 +1,282 @@
-use cairo::Context;
-use num::rational::Ratio;
-use num::BigInt;
-use num::ToPrimitive;
+use cairo::SvgUnit;
+use clap::Parser;
+use lsys::LSystem;
+use lsys::SvgOptions;
+use std::collections::HashMap;
 use std::collections::HashSet;
+use std::fs::File;
+use std::io::Write;
 use std::iter::FromIterator;
-use std::path::Path;
+use std::path::PathBuf;
+
+#[derive(Parser)]
+#[command(version, about)]
+struct Args {
+    /// Initial string.
+    axiom: String,
+    /// Variables that should be treated as a stroke and drawn.
+    variables_to_draw: String,
+    /// Turn angle in degrees.
+    angle: f64,
+    /// Number of times the rules will run.
+    iterations: usize,
+    /// Rules for replacing characters with a new string (i.e. "F=>F+F").
+    rules: Vec<String>,
+
+    /// Width of the SVG Canvas in millimeters.
+    #[arg(long)]
+    width: f64,
+    /// Height of the SVG Canvas in millimeters.
+    #[arg(long)]
+    height: f64,
+
+    /// Path to write the SVG to.
+    #[arg(short, long, value_name = "FILE")]
+    out: Option<PathBuf>,
+}
 
 fn main() {
-    koch();
-    sierpinski();
-    arrowhead();
-    dragon();
-    plant();
-    moore();
-    hilbert();
-    sierpinski_carpet();
-    snowflake();
-    gosper();
-    kolam();
-    crystal();
-}
-
-fn koch() {
-    run(
-        "F",
-        &['F'],
-        |c: char| match c {
-            'F' => "F+F-F-F+F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 2.,
-        4,
-        Path::new("out/koch.svg"),
-    );
-}
-
-fn sierpinski() {
-    run(
-        "F-G-G",
-        &['F', 'G'],
-        |c: char| match c {
-            'F' => "F-G+F+G-F",
-            'G' => "GG",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI * 2. / 3.,
-        6,
-        Path::new("out/sierpinski.svg"),
-    );
-}
-
-fn arrowhead() {
-    run(
-        "A",
-        &['A', 'B'],
-        |c: char| match c {
-            'A' => "B-A-B",
-            'B' => "A+B+A",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI * 1. / 3.,
-        7,
-        Path::new("out/arrowhead.svg"),
-    );
-}
-
-fn dragon() {
-    run(
-        "FX",
-        &['F'],
-        |c: char| match c {
-            'X' => "X+YF+",
-            'Y' => "-FX-Y",
-            'F' => "F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 2.,
-        12,
-        Path::new("out/dragon.svg"),
-    );
-}
-
-fn plant() {
-    run(
-        "X",
-        &['F'],
-        |c: char| match c {
-            'X' => "F-[[X]+X]+F[+FX]-X",
-            'F' => "FF",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI * 25.0 / 180.0,
-        5,
-        Path::new("out/plant.svg"),
-    );
-}
-
-fn moore() {
-    run(
-        "LFL+F+LFL",
-        &['F'],
-        |c: char| match c {
-            'L' => "-RF+LFL+FR-",
-            'R' => "+LF-RFR-FL+",
-            'F' => "F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI * 90.0 / 180.0,
-        5,
-        Path::new("out/moore.svg"),
-    );
-}
-
-fn hilbert() {
-    run(
-        "A",
-        &['F'],
-        |c: char| match c {
-            'A' => "-BF+AFA+FB-",
-            'B' => "+AF-BFB-FA+",
-            'F' => "F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 2.0,
-        6,
-        Path::new("out/hilbert.svg"),
-    );
-}
-
-fn sierpinski_carpet() {
-    run(
-        "F+F+F+F",
-        &['F'],
-        |c: char| match c {
-            'F' => "FF+F+F+F+FF",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 2.,
-        4,
-        Path::new("out/sierpinski_carpet.svg"),
-    );
-}
-
-fn snowflake() {
-    run(
-        "F++F++F",
-        &['F'],
-        |c: char| match c {
-            'F' => "F-F++F-F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 3.,
-        4,
-        Path::new("out/snowflake.svg"),
-    );
-}
-
-fn gosper() {
-    run(
-        "XF",
-        &['F'],
-        |c: char| match c {
-            'X' => "X+YF++YF-FX--FXFX-YF+",
-            'Y' => "-FX+YFYF++YF+FX--FX-Y",
-            'F' => "F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 3.,
-        5,
-        Path::new("out/gosper.svg"),
-    );
-}
-
-fn kolam() {
-    run(
-        "-D--D",
-        &['F'],
-        |c: char| match c {
-            'A' => "F++FFFF--F--FFFF++F++FFFF--F",
-            'B' => "F--FFFF++F++FFFF--F--FFFF++F",
-            'C' => "BFA--BFA",
-            'D' => "CFC--CFC",
-            'F' => "F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 4.0,
-        7,
-        Path::new("out/kolam.svg"),
-    );
-}
-
-fn crystal() {
-    run(
-        "F+F+F+F",
-        &['F'],
-        |c: char| match c {
-            'F' => "FF+F++F+F",
-            _ => unreachable!(),
-        },
-        std::f64::consts::PI / 2.,
-        4,
-        Path::new("out/crystal.svg"),
-    );
-}
-
-fn run<'a, F, P>(
-    axiom: &str,
-    variables_to_draw: &[char],
-    rules: F,
-    angle: f64,
-    iterations: usize,
-    path: P,
-) where
-    F: Fn(char) -> &'static str + Copy,
-    P: Into<&'a Path>,
-{
-    let variables_to_draw: HashSet<char> = HashSet::from_iter(variables_to_draw.iter().copied());
-    let mut state = axiom.chars().collect::<Vec<_>>();
-    for _ in 0..iterations {
-        state = state
-            .iter()
-            .map(|c| match c {
-                '+' => "+",
-                '-' => "-",
-                '|' => "|",
-                '[' => "[",
-                ']' => "]",
-                letter => rules(*letter),
-            })
-            .map(|res| res.chars())
-            .flatten()
-            .collect();
-    }
-
-    let mut current_position = (Ratio::from(BigInt::from(0)), Ratio::from(BigInt::from(0)));
-    let mut current_angle = -std::f64::consts::PI / 2.0;
-    let mut strokes: Vec<((Ratio<BigInt>, Ratio<BigInt>), bool)> = vec![];
-    let mut stack: Vec<((Ratio<BigInt>, Ratio<BigInt>), f64)> = vec![];
-    for c in state.iter() {
-        match c {
-            '+' => {
-                current_angle += angle;
-            }
-            '-' => {
-                current_angle -= angle;
-            }
-            '|' => {
-                current_angle = -current_angle;
-            }
-            '[' => {
-                stack.push((current_position.clone(), current_angle));
-            }
-            ']' => {
-                let state = stack.pop().unwrap();
-                current_position = state.0;
-                current_angle = state.1;
-                strokes.push((current_position.clone(), true));
-            }
-            other if variables_to_draw.contains(&other) => {
-                current_position = (
-                    current_position.0 + Ratio::from_float(f64::cos(current_angle)).unwrap(),
-                    current_position.1 + Ratio::from_float(f64::sin(current_angle)).unwrap(),
-                );
-                strokes.push((current_position.clone(), false));
-            }
-            _ => {}
-        }
-    }
-
-    const WIDTH: f64 = 1920.;
-    const HEIGHT: f64 = 1080.;
-    let min_width_height: f64 = WIDTH.min(HEIGHT);
-
-    let max = (
-        strokes
-            .iter()
-            .max_by_key(|((x, _y), _move)| x)
-            .cloned()
-            .unwrap()
-            .0
-             .0,
-        strokes
-            .iter()
-            .max_by_key(|((_x, y), _move)| y)
-            .cloned()
-            .unwrap()
-            .0
-             .1,
-    );
-    let min = (
-        strokes
-            .iter()
-            .min_by_key(|((x, _y), _move)| x)
-            .cloned()
-            .unwrap()
-            .0
-             .0,
-        strokes
-            .iter()
-            .min_by_key(|((_x, y), _move)| y)
-            .cloned()
-            .unwrap()
-            .0
-             .1,
-    );
-    let range = ((max.0 - &min.0), (max.1 - &min.1));
-    let min_to_zero_adjustment = (-min.0.clone(), -min.1.clone());
-
-    let surf = cairo::SvgSurface::new(WIDTH, HEIGHT, Some(path.into())).unwrap();
-    let ctx = Context::new(&surf);
-    ctx.scale(min_width_height, min_width_height);
-
-    // black background
-    ctx.set_source_rgb(0., 0., 0.);
-    ctx.rectangle(0., 0., WIDTH / min_width_height, HEIGHT / min_width_height);
-    ctx.fill();
-    // 2 px
-    ctx.set_line_width(2. / min_width_height);
-    // white line
-    ctx.set_source_rgb(1., 1., 1.);
-
-    // convert to Cairo coordinates
-    let cairo_offset = (
-        Ratio::from_float((WIDTH - min_width_height) / min_width_height / 2.).unwrap(),
-        Ratio::from_float((HEIGHT - min_width_height) / min_width_height / 2.).unwrap(),
-    );
-    strokes.iter_mut().for_each(|segment| {
-        *segment = (
+    let args = Args::parse();
+    let rules = args
+        .rules
+        .iter()
+        .map(|r| {
+            let (c, replacement) = r.split_once("=>").expect("rule contains =>");
+            assert_eq!(c.chars().count(), 1, "=> is preceded by a single char");
             (
-                (segment.0 .0.clone() + &min_to_zero_adjustment.0) / &range.0 + &cairo_offset.0,
-                (segment.0 .1.clone() + &min_to_zero_adjustment.1) / &range.1 + &cairo_offset.1,
-            ),
-            segment.1,
-        );
-    });
-    if let Some(first_segment) = strokes.first() {
-        ctx.move_to(
-            first_segment.0 .0.to_f64().unwrap(),
-            first_segment.0 .1.to_f64().unwrap(),
-        );
-    }
-    for segment in strokes.drain(1..) {
-        if segment.1 {
-            ctx.stroke();
-            ctx.move_to(
-                segment.0 .0.to_f64().unwrap(),
-                segment.0 .1.to_f64().unwrap(),
-            );
-        } else {
-            ctx.line_to(
-                segment.0 .0.to_f64().unwrap(),
-                segment.0 .1.to_f64().unwrap(),
-            );
+                c.chars().next().expect("character count is at least 1"),
+                replacement,
+            )
+        })
+        .collect::<HashMap<_, _>>();
+    let variables_to_draw: HashSet<char> = HashSet::from_iter(args.variables_to_draw.chars());
+    for v in variables_to_draw.iter().copied().chain(args.axiom.chars()) {
+        if !rules.contains_key(&v) && !matches!(v, '+' | '-' | '|' | '[' | ']') {
+            eprintln!(
+                r#"There is no replacement rule for `{v}`! Assuming self-replacement ("{v}=>{v}")"#
+            )
         }
     }
-    ctx.stroke();
+
+    let mut writer = args
+        .out
+        .map(|o| {
+            Box::new(File::create(o).expect("valid file path with permissions")) as Box<dyn Write>
+        })
+        .unwrap_or_else(|| Box::new(std::io::stdout()) as Box<dyn Write>);
+    LSystem {
+        axiom: args.axiom,
+        variables_to_draw,
+        // Degrees to radians
+        angle: args.angle / 180. * std::f64::consts::PI,
+        iterations: args.iterations,
+        rules,
+    }
+    .to_svg(
+        &SvgOptions {
+            width: args.width,
+            height: args.height,
+            units: SvgUnit::Mm,
+        },
+        &mut writer,
+    )
+    .unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn harness(
+        axiom: &str,
+        variables_to_draw: &[char],
+        rules: &[&str],
+        angle: f64,
+        iterations: usize,
+        expected: &str,
+    ) {
+        let mut actual = vec![];
+        LSystem {
+            axiom,
+            variables_to_draw: HashSet::from_iter(variables_to_draw.iter().copied()),
+            angle,
+            iterations,
+            rules: rules
+                .iter()
+                .map(|r| {
+                    let (c, r) = r.split_once("=>").unwrap();
+
+                    (c.chars().next().unwrap(), r)
+                })
+                .collect(),
+        }
+        .to_svg(
+            &SvgOptions {
+                width: 100.,
+                height: 100.,
+                units: SvgUnit::Mm,
+            },
+            &mut actual,
+        )
+        .unwrap();
+
+        assert_eq!(
+            expected,
+            String::from_utf8(actual).expect("cairo writes valid utf8")
+        );
+    }
+
+    #[test]
+    fn koch() {
+        harness(
+            "F",
+            &['F'],
+            &["F=>F+F-F-F+F"],
+            std::f64::consts::PI / 2.,
+            4,
+            include_str!("../tests/koch.svg"),
+        );
+    }
+
+    #[test]
+    fn sierpinski() {
+        harness(
+            "F-G-G",
+            &['F', 'G'],
+            &["F=>F-G+F+G-F", "G=>GG"],
+            std::f64::consts::PI * 2. / 3.,
+            6,
+            include_str!("../tests/sierpinski.svg"),
+        );
+    }
+
+    #[test]
+    fn arrowhead() {
+        harness(
+            "A",
+            &['A', 'B'],
+            &["A=>B-A-B", "B=>A+B+A"],
+            std::f64::consts::PI * 1. / 3.,
+            7,
+            include_str!("../tests/arrowhead.svg"),
+        );
+    }
+
+    #[test]
+    fn dragon() {
+        harness(
+            "FX",
+            &['F'],
+            &["X=>X+YF+", "Y=>-FX-Y", "F=>F"],
+            std::f64::consts::PI / 2.,
+            12,
+            include_str!("../tests/dragon.svg"),
+        );
+    }
+
+    #[test]
+    fn plant() {
+        harness(
+            "X",
+            &['F'],
+            &["X=>F-[[X]+X]+F[+FX]-X", "F=>FF"],
+            std::f64::consts::PI * 25.0 / 180.0,
+            5,
+            include_str!("../tests/plant.svg"),
+        );
+    }
+
+    #[test]
+    fn moore() {
+        harness(
+            "LFL+F+LFL",
+            &['F'],
+            &["L=>-RF+LFL+FR-", "R=>+LF-RFR-FL+", "F=>F"],
+            std::f64::consts::PI * 90.0 / 180.0,
+            5,
+            include_str!("../tests/moore.svg"),
+        );
+    }
+
+    #[test]
+    fn hilbert() {
+        harness(
+            "A",
+            &['F'],
+            &["A=>-BF+AFA+FB-", "B=>+AF-BFB-FA+", "F=>F"],
+            std::f64::consts::PI / 2.0,
+            6,
+            include_str!("../tests/hilbert.svg"),
+        );
+    }
+
+    #[test]
+    fn sierpinski_carpet() {
+        harness(
+            "F+F+F+F",
+            &['F'],
+            &["F=>FF+F+F+F+FF"],
+            std::f64::consts::PI / 2.,
+            4,
+            include_str!("../tests/sierpinski_carpet.svg"),
+        );
+    }
+
+    #[test]
+    fn snowflake() {
+        harness(
+            "F++F++F",
+            &['F'],
+            &["F=>F-F++F-F"],
+            std::f64::consts::PI / 3.,
+            4,
+            include_str!("../tests/snowflake.svg"),
+        );
+    }
+
+    #[test]
+    fn gosper() {
+        harness(
+            "XF",
+            &['F'],
+            &[
+                "X=>X+YF++YF-FX--FXFX-YF+",
+                "Y=>-FX+YFYF++YF+FX--FX-Y",
+                "F=>F",
+            ],
+            std::f64::consts::PI / 3.,
+            5,
+            include_str!("../tests/gosper.svg"),
+        );
+    }
+
+    #[test]
+    fn kolam() {
+        harness(
+            "-D--D",
+            &['F'],
+            &[
+                "A=>F++FFFF--F--FFFF++F++FFFF--F",
+                "B=>F--FFFF++F++FFFF--F--FFFF++F",
+                "C=>BFA--BFA",
+                "D=>CFC--CFC",
+                "F=>F",
+            ],
+            std::f64::consts::PI / 4.0,
+            7,
+            include_str!("../tests/kolam.svg"),
+        );
+    }
+
+    #[test]
+    fn crystal() {
+        harness(
+            "F+F+F+F",
+            &['F'],
+            &["F=>FF+F++F+F"],
+            std::f64::consts::PI / 2.,
+            4,
+            include_str!("../tests/crystal.svg"),
+        );
+    }
 }
