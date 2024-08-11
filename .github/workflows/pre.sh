@@ -1,3 +1,3 @@
 #!/bin/bash
 
-apk add cairo
+apk add cairo cairo-dev
