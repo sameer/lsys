@@ -26,5 +26,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUSTTARGET: ${{ matrix.targets.triple }}
           TOOLCHAIN_VERSION: ${{ matrix.targets.version }}
-          PRE_BUILD: "./.github/workflows/pre.sh"
           SRC_DIR: "."

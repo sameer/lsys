@@ -1,13 +1,15 @@
-use cairo::SvgUnit;
 use clap::Parser;
 use lsys::LSystem;
 use lsys::SvgOptions;
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
 use std::iter::FromIterator;
 use std::path::PathBuf;
+use svgtypes::LengthUnit;
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -17,7 +19,7 @@ struct Args {
     /// Variables that should be treated as a stroke and drawn.
     variables_to_draw: String,
     /// Turn angle in degrees.
-    angle: f64,
+    angle: Decimal,
     /// Number of times the rules will run.
     iterations: usize,
     /// Rules for replacing characters with a new string (i.e. "F=>F+F").
@@ -25,10 +27,10 @@ struct Args {
 
     /// Width of the SVG Canvas in millimeters.
     #[arg(long)]
-    width: f64,
+    width: Decimal,
     /// Height of the SVG Canvas in millimeters.
     #[arg(long)]
-    height: f64,
+    height: Decimal,
 
     /// Path to write the SVG to.
     #[arg(short, long, value_name = "FILE")]
@@ -68,7 +70,7 @@ fn main() {
         axiom: args.axiom,
         variables_to_draw,
         // Degrees to radians
-        angle: args.angle / 180. * std::f64::consts::PI,
+        angle: args.angle / Decimal::from_usize(180).expect("180 is a decimal") * Decimal::PI,
         iterations: args.iterations,
         rules,
     }
@@ -76,7 +78,7 @@ fn main() {
         &SvgOptions {
             width: args.width,
             height: args.height,
-            units: SvgUnit::Mm,
+            units: LengthUnit::Mm,
         },
         &mut writer,
     )
@@ -91,7 +93,7 @@ mod tests {
         axiom: &str,
         variables_to_draw: &[char],
         rules: &[&str],
-        angle: f64,
+        angle: Decimal,
         iterations: usize,
         expected: &str,
     ) {
@@ -112,9 +114,9 @@ mod tests {
         }
         .to_svg(
             &SvgOptions {
-                width: 100.,
-                height: 100.,
-                units: SvgUnit::Mm,
+                width: Decimal::ONE_HUNDRED,
+                height: Decimal::ONE_HUNDRED,
+                units: LengthUnit::Mm,
             },
             &mut actual,
         )
@@ -132,7 +134,7 @@ mod tests {
             "F",
             &['F'],
             &["F=>F+F-F-F+F"],
-            std::f64::consts::PI / 2.,
+            Decimal::HALF_PI,
             4,
             include_str!("../tests/koch.svg"),
         );
@@ -144,7 +146,7 @@ mod tests {
             "F-G-G",
             &['F', 'G'],
             &["F=>F-G+F+G-F", "G=>GG"],
-            std::f64::consts::PI * 2. / 3.,
+            Decimal::TWO_PI / Decimal::from_u32(3).unwrap(),
             6,
             include_str!("../tests/sierpinski.svg"),
         );
@@ -156,7 +158,7 @@ mod tests {
             "A",
             &['A', 'B'],
             &["A=>B-A-B", "B=>A+B+A"],
-            std::f64::consts::PI * 1. / 3.,
+            Decimal::PI / Decimal::from_u32(3).unwrap(),
             7,
             include_str!("../tests/arrowhead.svg"),
         );
@@ -168,7 +170,7 @@ mod tests {
             "FX",
             &['F'],
             &["X=>X+YF+", "Y=>-FX-Y", "F=>F"],
-            std::f64::consts::PI / 2.,
+            Decimal::HALF_PI,
             12,
             include_str!("../tests/dragon.svg"),
         );
@@ -180,7 +182,7 @@ mod tests {
             "X",
             &['F'],
             &["X=>F-[[X]+X]+F[+FX]-X", "F=>FF"],
-            std::f64::consts::PI * 25.0 / 180.0,
+            Decimal::PI * Decimal::from_u32(25).unwrap() / Decimal::from_u32(180).unwrap(),
             5,
             include_str!("../tests/plant.svg"),
         );
@@ -192,7 +194,7 @@ mod tests {
             "LFL+F+LFL",
             &['F'],
             &["L=>-RF+LFL+FR-", "R=>+LF-RFR-FL+", "F=>F"],
-            std::f64::consts::PI * 90.0 / 180.0,
+            Decimal::HALF_PI,
             5,
             include_str!("../tests/moore.svg"),
         );
@@ -204,7 +206,7 @@ mod tests {
             "A",
             &['F'],
             &["A=>-BF+AFA+FB-", "B=>+AF-BFB-FA+", "F=>F"],
-            std::f64::consts::PI / 2.0,
+            Decimal::HALF_PI,
             6,
             include_str!("../tests/hilbert.svg"),
         );
@@ -216,7 +218,7 @@ mod tests {
             "F+F+F+F",
             &['F'],
             &["F=>FF+F+F+F+FF"],
-            std::f64::consts::PI / 2.,
+            Decimal::HALF_PI,
             4,
             include_str!("../tests/sierpinski_carpet.svg"),
         );
@@ -228,7 +230,7 @@ mod tests {
             "F++F++F",
             &['F'],
             &["F=>F-F++F-F"],
-            std::f64::consts::PI / 3.,
+            Decimal::PI / Decimal::from_u32(3).unwrap(),
             4,
             include_str!("../tests/snowflake.svg"),
         );
@@ -244,7 +246,7 @@ mod tests {
                 "Y=>-FX+YFYF++YF+FX--FX-Y",
                 "F=>F",
             ],
-            std::f64::consts::PI / 3.,
+            Decimal::PI / Decimal::from_u32(3).unwrap(),
             5,
             include_str!("../tests/gosper.svg"),
         );
@@ -262,7 +264,7 @@ mod tests {
                 "D=>CFC--CFC",
                 "F=>F",
             ],
-            std::f64::consts::PI / 4.0,
+            Decimal::QUARTER_PI,
             7,
             include_str!("../tests/kolam.svg"),
         );
@@ -274,7 +276,7 @@ mod tests {
             "F+F+F+F",
             &['F'],
             &["F=>FF+F++F+F"],
-            std::f64::consts::PI / 2.,
+            Decimal::HALF_PI,
             4,
             include_str!("../tests/crystal.svg"),
         );

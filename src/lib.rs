@@ -1,14 +1,11 @@
 //! A crate for visualizing 2D [L-systems](https://en.wikipedia.org/wiki/L-system) with SVGs.
 
-use cairo::Context;
-use cairo::StreamWithError;
-use cairo::SvgUnit;
-use num::rational::Ratio;
-use num::BigInt;
-use num::ToPrimitive;
+use rust_decimal::Decimal;
+use rust_decimal::MathematicalOps;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::io::Write;
+use svgtypes::LengthUnit;
 
 /// Parameters for the L-system
 #[derive(Debug, Clone)]
@@ -17,8 +14,8 @@ pub struct LSystem<A: AsRef<str>, R: AsRef<str>> {
     pub axiom: A,
     /// Variables that should be treated as a stroke and drawn.
     pub variables_to_draw: HashSet<char>,
-    /// Turn angle in degrees.
-    pub angle: f64,
+    /// Turn angle in radians.
+    pub angle: Decimal,
     /// Number of times the rules will run.
     pub iterations: usize,
     /// Rules for replacing characters with a new string.
@@ -29,24 +26,18 @@ pub struct LSystem<A: AsRef<str>, R: AsRef<str>> {
 #[derive(Debug, Clone)]
 pub struct SvgOptions {
     /// Width in [`Self::units`].
-    pub width: f64,
+    pub width: Decimal,
     /// Height in [`Self::units`].
-    pub height: f64,
+    pub height: Decimal,
     /// Units used by the SVG
     ///
     /// <https://www.w3.org/TR/SVG/coords.html#Units>
-    pub units: SvgUnit,
+    pub units: LengthUnit,
 }
 
 /// Error type for [`LSystem::to_svg`].
 #[derive(Debug, thiserror::Error)]
 pub enum RenderError {
-    #[error("Error in Cairo operation: {0}")]
-    Cairo(#[from] cairo::Error),
-    #[error("Cannot convert float to a rational number: {0}")]
-    NoRationalRepr(f64),
-    #[error("Cannot convert rational number to a float: {0}")]
-    NoFloatRepr(num::BigRational),
     #[error("I/O error while writing SVG: {0}")]
     Io(#[from] std::io::Error),
 }
@@ -84,9 +75,6 @@ where
     }
 
     /// Run the L-system and convert it into an SVG.
-    ///
-    /// Safety: there is an `unsafe` block in this method to allow arbitrary writer lifetimes.
-    /// It is safe because the [`cairo::svg::SvgSurface`] stays within this method.
     pub fn to_svg<W>(
         &self,
         SvgOptions {
@@ -94,17 +82,17 @@ where
             height,
             units,
         }: &SvgOptions,
-        writer: &mut W,
+        mut writer: W,
     ) -> Result<(), RenderError>
     where
-        W: Write + 'static,
+        W: Write,
     {
         let final_state = self.calculate_final_state();
 
-        let mut current_position = (Ratio::from(BigInt::from(0)), Ratio::from(BigInt::from(0)));
-        let mut current_angle = -std::f64::consts::PI / 2.0;
-        let mut strokes: Vec<((Ratio<BigInt>, Ratio<BigInt>), bool)> = vec![];
-        let mut stack: Vec<((Ratio<BigInt>, Ratio<BigInt>), f64)> = vec![];
+        let mut current_position = (Decimal::ZERO, Decimal::ZERO);
+        let mut current_angle = -Decimal::HALF_PI;
+        let mut strokes: Vec<((Decimal, Decimal), bool)> = vec![];
+        let mut stack: Vec<((Decimal, Decimal), Decimal)> = vec![];
         for c in final_state.chars() {
             match c {
                 '+' | '-' | '|' => {
@@ -116,30 +104,23 @@ where
                     };
                 }
                 '[' => {
-                    stack.push((current_position.clone(), current_angle));
+                    stack.push((current_position, current_angle));
                 }
                 ']' => {
                     let state = stack.pop().expect("equal number of [ and ]");
                     current_position = state.0;
                     current_angle = state.1;
-                    strokes.push((current_position.clone(), true));
+                    strokes.push((current_position, true));
                 }
                 other if self.variables_to_draw.contains(&other) => {
-                    let cos = f64::cos(current_angle);
-                    let sin = f64::sin(current_angle);
-                    current_position = (
-                        current_position.0
-                            + Ratio::from_float(cos).ok_or(RenderError::NoRationalRepr(cos))?,
-                        current_position.1
-                            + Ratio::from_float(sin).ok_or(RenderError::NoRationalRepr(sin))?,
-                    );
-                    strokes.push((current_position.clone(), false));
+                    let cos = current_angle.cos();
+                    let sin = current_angle.sin();
+                    current_position = (current_position.0 + cos, current_position.1 + sin);
+                    strokes.push((current_position, false));
                 }
                 _ => {}
             }
         }
-
-        let min_width_height: f64 = width.min(*height);
 
         let max = (
             strokes
@@ -173,74 +154,66 @@ where
                 .0
                  .1,
         );
-        let range = ((max.0 - &min.0), (max.1 - &min.1));
-        let min_to_zero_adjustment = (-min.0.clone(), -min.1.clone());
 
-        let mut surf = unsafe { cairo::SvgSurface::for_raw_stream(*width, *height, writer)? };
-        surf.set_document_unit(*units);
-        let ctx = Context::new(&surf)?;
-        ctx.scale(min_width_height, min_width_height);
+        let units = match units {
+            LengthUnit::None => "",
+            LengthUnit::Em => "em",
+            LengthUnit::Ex => "ex",
+            LengthUnit::Px => "px",
+            LengthUnit::In => "in",
+            LengthUnit::Cm => "cm",
+            LengthUnit::Mm => "mm",
+            LengthUnit::Pt => "pt",
+            LengthUnit::Pc => "pc",
+            LengthUnit::Percent => "%",
+        };
+        writeln!(writer, r#"<?xml version="1.0" encoding="UTF-8"?>"#)?;
+
+        writeln!(
+            writer,
+            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}{units}" height="{height}{units}" viewBox="0 0 {width} {height}">"#
+        )?;
 
         // 1 unit
-        ctx.set_line_width(1. / min_width_height);
-        // black line
-        ctx.set_source_rgb(0., 0., 0.);
+        let stroke_width = Decimal::ONE / width.min(height);
+        write!(
+            writer,
+            r#"<path fill="none" stroke-width="{stroke_width}" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d=""#
+        )?;
 
-        // convert to Cairo coordinates
-        let offset = (
-            (width - min_width_height) / min_width_height / 2.,
-            (height - min_width_height) / min_width_height / 2.,
-        );
-        let cairo_offset = (
-            Ratio::from_float(offset.0).ok_or(RenderError::NoRationalRepr(offset.0))?,
-            Ratio::from_float(offset.1).ok_or(RenderError::NoRationalRepr(offset.1))?,
-        );
+        let range = ((max.0 - min.0), (max.1 - min.1));
         strokes.iter_mut().for_each(|segment| {
             *segment = (
                 (
-                    (segment.0 .0.clone() + &min_to_zero_adjustment.0) / &range.0 + &cairo_offset.0,
-                    (segment.0 .1.clone() + &min_to_zero_adjustment.1) / &range.1 + &cairo_offset.1,
+                    (segment.0 .0 - min.0) / range.0,
+                    (segment.0 .1 - min.1) / range.1,
                 ),
                 segment.1,
             );
         });
-        if let Some(((first_segment_x, first_segment_y), _)) = strokes.first() {
-            ctx.move_to(
-                first_segment_x
-                    .to_f64()
-                    .ok_or_else(|| RenderError::NoFloatRepr(first_segment_x.clone()))?,
-                first_segment_y
-                    .to_f64()
-                    .ok_or_else(|| RenderError::NoFloatRepr(first_segment_y.clone()))?,
-            );
-        }
-        for ((segment_x, segment_y), is_move) in strokes.drain(1..) {
-            if is_move {
-                ctx.stroke()?;
-                ctx.move_to(
-                    segment_x
-                        .to_f64()
-                        .ok_or_else(|| RenderError::NoFloatRepr(segment_x.clone()))?,
-                    segment_y
-                        .to_f64()
-                        .ok_or_else(|| RenderError::NoFloatRepr(segment_y.clone()))?,
-                );
-            } else {
-                ctx.line_to(
-                    segment_x
-                        .to_f64()
-                        .ok_or_else(|| RenderError::NoFloatRepr(segment_x.clone()))?,
-                    segment_y
-                        .to_f64()
-                        .ok_or_else(|| RenderError::NoFloatRepr(segment_y.clone()))?,
-                );
-            }
-        }
-        ctx.stroke()?;
 
-        // Safety: explicitly release the writer
-        surf.finish_output_stream()
-            .map_err(|StreamWithError { error, .. }: StreamWithError| RenderError::from(error))?;
+        strokes.iter_mut().for_each(|((x, y), _)| {
+            *x = x.round_dp(7);
+            *y = y.round_dp(7);
+        });
+
+        if let Some(((first_segment_x, first_segment_y), _)) = strokes.pop() {
+            write!(writer, "M {first_segment_x} {first_segment_y}",)?;
+        }
+        for ((segment_x, segment_y), is_move) in strokes {
+            write!(
+                writer,
+                " {} {segment_x} {segment_y}",
+                if is_move { 'M' } else { 'L' },
+            )?;
+        }
+
+        writeln!(
+            writer,
+            "\" transform=\"matrix({width}, 0, 0, {height}, 0, 0)\"/>",
+        )?;
+
+        writeln!(writer, "</svg>")?;
 
         Ok(())
     }
