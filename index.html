@@ -25,8 +25,8 @@
         <div id="main"></div>
     </main>
     <script type="module">
-        import init from "/./assets/dioxus/lsys-web.js";
-        init("/./assets/dioxus/lsys-web_bg.wasm").then(wasm => {
+        import init from "/lsys/assets/dioxus/lsys-web.js";
+        init("/lsys/assets/dioxus/lsys-web_bg.wasm").then(wasm => {
             if (wasm.__wbindgen_start == undefined) {
                 wasm.main();
             }
