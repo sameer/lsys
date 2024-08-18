@@ -18,6 +18,9 @@ asset_dir = "public"
 # HTML title tag content
 title = "L-system Playground"
 
+# GitHub Pages base URL: https://sameer.github.io/lsys/
+base_path = "lsys"
+
 [web.watcher]
 
 # when watcher trigger, regenerate the `index.html`
