@@ -197,14 +197,14 @@ where
             *y = y.round_dp(7);
         });
 
-        if let Some(((first_segment_x, first_segment_y), _)) = strokes.pop() {
+        if let Some(((first_segment_x, first_segment_y), _)) = strokes.first() {
             write!(writer, "M {first_segment_x} {first_segment_y}",)?;
         }
-        for ((segment_x, segment_y), is_move) in strokes {
+        for ((segment_x, segment_y), is_move) in &strokes[1..] {
             write!(
                 writer,
                 " {} {segment_x} {segment_y}",
-                if is_move { 'M' } else { 'L' },
+                if *is_move { 'M' } else { 'L' },
             )?;
         }
 

@@ -1,0 +1,24 @@
+[package]
+name = "lsys-web"
+version = "0.1.0"
+authors = ["Sameer Puri <crates@purisa.me>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base64 = "0.22.1"
+
+dioxus = { version = "0.5", features = ["web", "router"] }
+
+# Debug
+dioxus-logger = "0.5.1"
+lsys = { version = "0.3.1", path = "../lib" }
+rust_decimal = { version = "1.35.0", default-features = false, features = [
+    "std",
+    "maths",
+] }
+svgtypes = "0.15.1"
+wasm-bindgen = "0.2.93"
+wasm-bindgen-futures = "0.4.43"
+web-sys = { version = "0.3.70", features = ["Clipboard", "MouseEvent", "Navigator"] }

@@ -1,4 +1,4 @@
 [workspace]
-members = ["lib"]
-default-members = ["lib"]
+members = ["lib", "web"]
+default-members = ["lib", "web"]
 resolver = "2"
