@@ -20,6 +20,8 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
+        with:
+            cache-all-crates: true
       - name: Install Dioxus CLI
         run: cargo install dioxus-cli
       - name: Build release
