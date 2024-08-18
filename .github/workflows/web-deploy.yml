@@ -1,8 +1,8 @@
-name: Deploy svg2gcode-web
+name: Deploy lsys-web
 on:
   workflow_run:
-    branches: [main]
-    workflows: [Check svg2gcode-web]
+    branches: [master]
+    workflows: [Check compile]
     types: [completed]
 
 env:

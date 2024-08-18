@@ -43,3 +43,6 @@ script = []
 # Javascript code file
 # serve: [dev-server] only
 script = []
+
+[bundle]
+icon =["./public/favicon-32x32.png"]
