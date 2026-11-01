@@ -48,7 +48,8 @@ fn App() -> Element {
                 .read()
                 .chars()
                 .filter(|c| !matches!(c, '+' | '-' | '|' | '[' | ']'))
-                .all(|c| rules.contains_key(&c)) {
+                .all(|c| rules.contains_key(&c))
+            {
                 Ok(rules)
             } else {
                 Err("missing rule")
