@@ -24,7 +24,7 @@ jobs:
         with:
             cache-all-crates: true
       - name: Install Dioxus CLI
-        run: cargo install dioxus-cli
+        run: curl -sSL https://dioxus.dev/install.sh | bash
       - name: Build release
         run: dx build --package lsys-web --release
       - name: Upload to Github Pages
