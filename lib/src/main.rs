@@ -1,8 +1,8 @@
 use clap::Parser;
 use lsys::LSystem;
 use lsys::SvgOptions;
-use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
+use rust_decimal::prelude::FromPrimitive;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs::File;
@@ -56,16 +56,14 @@ fn main() {
         if !rules.contains_key(&v) && !matches!(v, '+' | '-' | '|' | '[' | ']') {
             eprintln!(
                 r#"There is no replacement rule for `{v}`! Assuming self-replacement ("{v}=>{v}")"#
-            )
+            );
         }
     }
 
-    let mut writer = args
-        .out
-        .map(|o| {
-            Box::new(File::create(o).expect("valid file path with permissions")) as Box<dyn Write>
-        })
-        .unwrap_or_else(|| Box::new(std::io::stdout()) as Box<dyn Write>);
+    let mut writer = args.out.map_or_else(
+        || Box::new(std::io::stdout()) as Box<dyn Write>,
+        |o| Box::new(File::create(o).expect("valid file path with permissions")) as Box<dyn Write>,
+    );
     LSystem {
         axiom: args.axiom,
         variables_to_draw,

@@ -9,7 +9,7 @@ use base64::Engine;
 use dioxus::prelude::*;
 use dioxus_logger::tracing::Level;
 use lsys::{LSystem, SvgOptions};
-use rust_decimal::{prelude::FromPrimitive, Decimal};
+use rust_decimal::{Decimal, prelude::FromPrimitive};
 use svgtypes::LengthUnit;
 use wasm_bindgen::JsCast;
 use web_sys::window;
@@ -40,19 +40,18 @@ fn App() -> Element {
             if replacement.is_empty() {
                 return Err("=> must be followed by a replacement string");
             }
-            Ok((c.chars().next().unwrap(), replacement.to_string()))
+            Ok((c.chars().next().unwrap(), replacement.to_owned()))
         })
         .collect::<Result<HashMap<_, _>, _>>()
         .and_then(|rules| {
-            if !axiom
+            if axiom
                 .read()
                 .chars()
                 .filter(|c| !matches!(c, '+' | '-' | '|' | '[' | ']'))
-                .all(|c| rules.contains_key(&c))
-            {
-                Err("missing rule")
-            } else {
+                .all(|c| rules.contains_key(&c)) {
                 Ok(rules)
+            } else {
+                Err("missing rule")
             }
         });
     let variables_to_draw_result = match rules_result.as_ref() {
@@ -76,7 +75,7 @@ fn App() -> Element {
         Err(_) => Ok(variables_to_draw.read().clone()),
     };
     let angle_result = angle.read().parse::<Decimal>();
-    let iterations_result = dbg!(iterations.read()).parse::<usize>();
+    let iterations_result = iterations.read().parse::<usize>();
 
     let l_system = match (
         rules_result.as_ref(),
@@ -88,8 +87,7 @@ fn App() -> Element {
             axiom: axiom.read().clone(),
             rules: rules.clone(),
             variables_to_draw: variables_to_draw.chars().collect(),
-            angle: angle.clone() / Decimal::from_usize(180).expect("180 is a decimal")
-                * Decimal::PI,
+            angle: *angle / Decimal::from_usize(180).expect("180 is a decimal") * Decimal::PI,
             iterations: *iterations,
         }),
         _ => None,
@@ -151,7 +149,7 @@ fn App() -> Element {
                             oninput: move |event| rules.set(event.value())
                         }
                         if let Err(err) = rules_result.as_ref() {
-                            small { id: "rules-helper", {err} }
+                            small { id: "rules-helper", {*err} }
                         }
                     }
                     label {
@@ -261,10 +259,8 @@ fn App() -> Element {
                     if let Some(target) = inner
                         .target()
                         .and_then(|t| t.dyn_into::<web_sys::Element>().ok())
-                    {
-                        if !examples_article.contains(Some(&target)) {
-                            examples_open.set(false);
-                        }
+                        && !examples_article.contains(Some(&target)) {
+                        examples_open.set(false);
                     }
                 },
                 article { id: "examples-article",

@@ -126,33 +126,33 @@ where
             strokes
                 .iter()
                 .max_by_key(|((x, _y), _move)| x)
-                .cloned()
+                .copied()
                 .expect("at least one stroke")
                 .0
-                 .0,
+                .0,
             strokes
                 .iter()
                 .max_by_key(|((_x, y), _move)| y)
-                .cloned()
+                .copied()
                 .expect("at least one stroke")
                 .0
-                 .1,
+                .1,
         );
         let min = (
             strokes
                 .iter()
                 .min_by_key(|((x, _y), _move)| x)
-                .cloned()
+                .copied()
                 .expect("at least one stroke")
                 .0
-                 .0,
+                .0,
             strokes
                 .iter()
                 .min_by_key(|((_x, y), _move)| y)
-                .cloned()
+                .copied()
                 .expect("at least one stroke")
                 .0
-                 .1,
+                .1,
         );
 
         let units = match units {
@@ -185,8 +185,8 @@ where
         strokes.iter_mut().for_each(|segment| {
             *segment = (
                 (
-                    (segment.0 .0 - min.0) / range.0,
-                    (segment.0 .1 - min.1) / range.1,
+                    (segment.0.0 - min.0) / range.0,
+                    (segment.0.1 - min.1) / range.1,
                 ),
                 segment.1,
             );
@@ -198,9 +198,9 @@ where
         });
 
         if let Some(((first_segment_x, first_segment_y), _)) = strokes.first() {
-            write!(writer, "M {first_segment_x} {first_segment_y}",)?;
+            write!(writer, "M {first_segment_x} {first_segment_y}")?;
         }
-        for ((segment_x, segment_y), is_move) in &strokes[1..] {
+        for ((segment_x, segment_y), is_move) in strokes.iter().skip(1) {
             write!(
                 writer,
                 " {} {segment_x} {segment_y}",
