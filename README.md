@@ -43,37 +43,37 @@ cargo run --release -- --width 100 --height 100 'F++F++F' 'F' 60 4 'F=>F-F++F-F'
 Many of the systems below come from [Paul Bourke's site](http://paulbourke.net/fractals/lsys/).
 
 ### Sierpinski Triangle
-![sierpinski](tests/sierpinski.svg)
+![sierpinski](lib/tests/sierpinski.svg)
 
 ### Sierpinski Arrowhead
-![arrowhead](tests/arrowhead.svg)
+![arrowhead](lib/tests/arrowhead.svg)
 
 ### Koch Curve
-![koch](tests/koch.svg)
+![koch](lib/tests/koch.svg)
 
 ### Dragon Curve
-![dragon](tests/dragon.svg)
+![dragon](lib/tests/dragon.svg)
 
 ### Fractal Plant
-![plant](tests/plant.svg)
+![plant](lib/tests/plant.svg)
 
 ### Moore Curve
-![moore](tests/moore.svg)
+![moore](lib/tests/moore.svg)
 
 ### Hilbert Curve
-![hilbert](tests/hilbert.svg)
+![hilbert](lib/tests/hilbert.svg)
 
 ### Sierpinski Carpet
-![sierpinski_capret](tests/sierpinski_carpet.svg)
+![sierpinski_capret](lib/tests/sierpinski_carpet.svg)
 
 ### Koch Snowflake
-![snowflake](tests/snowflake.svg)
+![snowflake](lib/tests/snowflake.svg)
 
 ### Hexagonal Gosper
-![gosper](tests/gosper.svg)
+![gosper](lib/tests/gosper.svg)
 
 ### Kolam
-![kolam](tests/kolam.svg)
+![kolam](lib/tests/kolam.svg)
 
 ### Crystal
-![crystal](tests/crystal.svg)
+![crystal](lib/tests/crystal.svg)
