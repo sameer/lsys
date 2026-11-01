@@ -30,7 +30,7 @@ jobs:
       - name: Upload to Github Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ github.workspace }}/web/dist
+          path: ${{ github.workspace }}/dist
   deploy:
     environment:
       name: github-pages
