@@ -171,14 +171,22 @@ where
 
         writeln!(
             writer,
-            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}{units}" height="{height}{units}" viewBox="0 0 {width} {height}">"#
+            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{width}{units}" height="{height}{units}" viewBox="0 0 {width} {height}">
+<style>
+path {{
+    stroke: black;
+}}
+@media (prefers-color-scheme: dark) {{
+    path {{ stroke: white; }}
+}}
+</style>"#
         )?;
 
         // 1 unit
         let stroke_width = Decimal::ONE / width.min(height);
         write!(
             writer,
-            r#"<path fill="none" stroke-width="{stroke_width}" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d=""#
+            r#"<path fill="none" stroke-width="{stroke_width}" stroke-linecap="butt" stroke-linejoin="miter" stroke-opacity="1" stroke-miterlimit="10" d=""#
         )?;
 
         let range = ((max.0 - min.0), (max.1 - min.1));

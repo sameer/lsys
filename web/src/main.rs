@@ -220,7 +220,7 @@ fn App() -> Element {
 
             if let Some(svg) = svg.read().as_ref() {
                 article {
-                    div { dangerous_inner_html: lsys_svg_to_color_scheme_aware_svg(svg) }
+                    div { dangerous_inner_html: svg }
                     footer {
                         div { class: "grid",
                             a { role: "button", onclick: copy_onclick,
@@ -301,18 +301,6 @@ fn App() -> Element {
             }
         }
     }
-}
-
-fn lsys_svg_to_color_scheme_aware_svg(svg: &str) -> String {
-    let style = "<style>\
-        @media (prefers-color-scheme: light) { path { stroke: black; } }\
-        @media (prefers-color-scheme: dark) { path { stroke: white; } }\
-    </style>";
-    svg.lines()
-        .take(2)
-        .chain(once(style))
-        .chain(svg.lines().skip(2))
-        .collect()
 }
 
 struct Example {
