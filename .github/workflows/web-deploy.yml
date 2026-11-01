@@ -26,9 +26,7 @@ jobs:
       - name: Install Dioxus CLI
         run: cargo install dioxus-cli
       - name: Build release
-        run: |
-            cd ${{ github.workspace }}/web
-            dx build --release
+        run: dx build --package lsys-web --release
       - name: Upload to Github Pages
         uses: actions/upload-pages-artifact@v3
         with:
